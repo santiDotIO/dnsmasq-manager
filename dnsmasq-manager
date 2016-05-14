@@ -1,0 +1,119 @@
+#!/bin/bash
+
+COMMAND=$1;
+HOSTNAME=$2;
+
+# Print help
+if [ -o $COMMAND ]; then
+	printf "Usage:\t dnsmasq-manager [COMMAND] [arg...]\n\n";
+	printf "Commands\n";
+	printf "\t install \t [HOSTNAME]\t To install inital hostname require\n";
+	printf "\t uninstall \t\t         Uninstall dnsmasq and related directories/files\n";
+	printf "\t add \t         [HOSTNAME]\t Add new hostname\n";
+	printf "\t rm \t         [HOSTNAME]\t Remove hostname\n";
+	exit;
+fi
+
+# install command
+if [[ $COMMAND == 'install' ]] && [[ $HOSTNAME != '' ]]; then
+	# ----------------------
+	# Install
+	# ----------------------
+	brew install dnsmasq;
+
+	# ----------------------
+	# Setup
+	# ----------------------
+	# Create config directory
+	mkdir -pv $(brew --prefix)/etc/;
+	# Setup *.$HOSTNAME
+	echo "address=/.$HOSTNAME/127.0.0.1" > $(brew --prefix)/etc/dnsmasq.conf;
+
+	# ----------------------
+	# Autostart
+	# ----------------------
+	# Work after reboot
+	sudo cp -v $(brew --prefix dnsmasq)/homebrew.mxcl.dnsmasq.plist /Library/LaunchDaemons;
+	# Get it going right now
+	sudo launchctl load -w /Library/LaunchDaemons/homebrew.mxcl.dnsmasq.plist;
+
+	# ----------------------
+	# Add to resolvers
+	# ----------------------
+	# Create resolver directory
+	sudo mkdir -v /etc/resolver;
+	# Add your nameserver to resolvers
+	echo "Creating /etc/resolver/$HOSTNAME";
+	sudo bash -c 'echo "nameserver 127.0.0.1" > /etc/resolver/'$HOSTNAME;
+
+	exit;
+fi
+
+# Uninstall dnsmasq, files
+if [[ $COMMAND == 'uninstall' ]]; then
+	# ----------------------
+	# Uninstall
+	# ----------------------
+	brew uninstall dnsmasq;
+
+	# ----------------------
+	# Cleanup
+	# ----------------------
+	
+	# remove dnsmasq.conf
+	echo "Removing:"
+	sudo rm -v $(brew --prefix)/etc/dnsmasq.conf;
+	# remove from reboot
+	sudo rm -v /Library/LaunchDaemons/homebrew.mxcl.dnsmasq.plist;
+	# remove Resolvers
+	sudo rm -rv /etc/resolver;
+	exit;
+fi
+
+# Add new DNS
+if [[ $COMMAND == 'add' ]] && [[ $HOSTNAME != '' ]]; then
+	echo "Adding $HOSTNAME";
+	
+	# Append *.$HOSTNAME
+	echo "Appending to $(brew --prefix)/etc/dnsmasq.conf";
+	echo "address=/.$HOSTNAME/127.0.0.1" >> $(brew --prefix)/etc/dnsmasq.conf;
+
+	# Add your nameserver to resolvers
+	echo "Creating /etc/resolver/$HOSTNAME";
+	sudo bash -c 'echo "nameserver 127.0.0.1" > /etc/resolver/'$HOSTNAME;
+
+	echo "Restarting dnsmasq";
+	sudo launchctl stop homebrew.mxcl.dnsmasq;
+	sudo launchctl start homebrew.mxcl.dnsmasq;
+	exit;
+fi
+
+# Add new DNS
+if [[ $COMMAND == 'rm' ]] && [[ $HOSTNAME != '' ]]; then
+	echo "Removing $HOSTNAME";
+
+	# remove HOSTNAME from dnsmasq.conf
+	echo "Removing from $(brew --prefix)/etc/dnsmasq.conf";
+	sed -i -e "s/.*"$HOSTNAME".*//g" $(brew --prefix)/etc/dnsmasq.conf;
+	# remove empty lines
+	sed -i -e "/^\s*$/d" $(brew --prefix)/etc/dnsmasq.conf;
+
+	# Remove your nameserver from resolvers
+	echo "Removing /etc/resolver/$HOSTNAME";
+	sudo rm -v /etc/resolver/$HOSTNAME;
+
+	echo "Restarting dnsmasq";
+	sudo launchctl stop homebrew.mxcl.dnsmasq;
+	sudo launchctl start homebrew.mxcl.dnsmasq;
+	exit;
+fi
+
+# Add new DNS
+if [[ $COMMAND == 'restart' ]] && [[ $HOSTNAME != '' ]]; then
+	echo "Restarting dnsmasq";
+	sudo launchctl stop homebrew.mxcl.dnsmasq;
+	sudo launchctl start homebrew.mxcl.dnsmasq;
+	exit;
+fi
+
+echo "Error: [HOSTNAME] required";
