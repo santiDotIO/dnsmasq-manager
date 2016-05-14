@@ -1,6 +1,6 @@
 # dnsmasq-manager
 
-Simple wrapper for creadting neccessary files need to create host resolver
+Simple wrapper for creating neccessary files need for host resolver
 
 Credit to [@alanthing](https://github.com/alanthing)
 [Never touch your local /etc/hosts file in OS X again](https://echo.co/blog/never-touch-your-local-etchosts-file-os-x-again)
