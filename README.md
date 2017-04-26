@@ -68,7 +68,7 @@ $ dnsmasq-manager add [HOSTNAME]
 ### rm
 
 ```
-$ dnsmasq-manager add [HOSTNAME]
+$ dnsmasq-manager rm [HOSTNAME]
 ```
 
 - remove hostname
