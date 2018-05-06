@@ -2,9 +2,6 @@
 
 Simple dnsmasq wrapper for managing host resolvers
 
-Credit to [@alanthing](https://github.com/alanthing)
-[Never touch your local /etc/hosts file in OS X again](https://echo.co/blog/never-touch-your-local-etchosts-file-os-x-again)
-
 ## Getting Started 
 Clone repo
 
